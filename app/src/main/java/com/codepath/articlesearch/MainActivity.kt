@@ -25,10 +25,13 @@ private const val ARTICLE_SEARCH_URL =
     "https://api.nytimes.com/svc/search/v2/articlesearch.json?api-key=${SEARCH_API_KEY}"
 
 class MainActivity : AppCompatActivity() {
+    private val articles = mutableListOf<Article>()
     private lateinit var articlesRecyclerView: RecyclerView
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val articleAdapter = ArticleAdapter(this, articles)
+
         super.onCreate(savedInstanceState)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -42,6 +45,9 @@ class MainActivity : AppCompatActivity() {
             val dividerItemDecoration = DividerItemDecoration(this, it.orientation)
             articlesRecyclerView.addItemDecoration(dividerItemDecoration)
         }
+
+        articlesRecyclerView.adapter = articleAdapter
+
 
         val client = AsyncHttpClient()
         client.get(ARTICLE_SEARCH_URL, object : JsonHttpResponseHandler() {
@@ -60,9 +66,17 @@ class MainActivity : AppCompatActivity() {
                     // TODO: Create the parsedJSON
 
                     // TODO: Do something with the returned json (contains article information)
-
+                    val parsedJson = createJson().decodeFromString(
+                        SearchNewsResponse.serializer(),
+                        json.jsonObject.toString()
+                    )
                     // TODO: Save the articles and reload the screen
+                    parsedJson.response?.docs?.let { list ->
+                            articles.addAll(list)
 
+                            // Reload the screen
+                            articleAdapter.notifyDataSetChanged()
+                    }
                 } catch (e: JSONException) {
                     Log.e(TAG, "Exception: $e")
                 }
