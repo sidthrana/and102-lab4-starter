@@ -1,3 +1,5 @@
+package com.codepath.articlesearch
+
 import kotlinx.coroutines.flow.Flow
 import androidx.room.Dao
 import androidx.room.Insert

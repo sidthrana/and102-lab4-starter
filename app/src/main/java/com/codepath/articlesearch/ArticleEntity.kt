@@ -1,3 +1,5 @@
+package com.codepath.articlesearch
+
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey

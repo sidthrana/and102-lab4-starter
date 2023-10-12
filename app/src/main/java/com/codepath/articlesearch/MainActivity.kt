@@ -1,8 +1,5 @@
 package com.codepath.articlesearch
 
-import ArticleApplication
-import ArticleEntity
-import DisplayArticle
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
@@ -37,6 +34,22 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val articleAdapter = ArticleAdapter(this, articles)
+        lifecycleScope.launch {
+            (application as ArticleApplication).db.articleDao().getAll().collect { databaseList ->
+                databaseList.map { entity ->
+                    DisplayArticle(
+                        entity.headline,
+                        entity.articleAbstract,
+                        entity.byline,
+                        entity.mediaImageUrl
+                    )
+                }.also { mappedList ->
+                    articles.clear()
+                    articles.addAll(mappedList)
+                    articleAdapter.notifyDataSetChanged()
+                }
+            }
+        }
 
         super.onCreate(savedInstanceState)
 
@@ -53,6 +66,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         articlesRecyclerView.adapter = articleAdapter
+
 
 
         val client = AsyncHttpClient()
@@ -78,21 +92,16 @@ class MainActivity : AppCompatActivity() {
                     )
                     // TODO: Save the articles and reload the screen
                     parsedJson.response?.docs?.let { list ->
-                        lifecycleScope.launch {
-                            (application as ArticleApplication).db.articleDao().getAll().collect { databaseList ->
-                                databaseList.map { entity ->
-                                    DisplayArticle(
-                                        entity.headline,
-                                        entity.articleAbstract,
-                                        entity.byline,
-                                        entity.mediaImageUrl
-                                    )
-                                }.also { mappedList ->
-                                    articles.clear()
-                                    articles.addAll(mappedList)
-                                    articleAdapter.notifyDataSetChanged()
-                                }
-                            }
+                        lifecycleScope.launch(IO) {
+                            (application as ArticleApplication).db.articleDao().deleteAll()
+                            (application as ArticleApplication).db.articleDao().insertAll(list.map {
+                                ArticleEntity(
+                                    headline = it.headline?.main,
+                                    articleAbstract = it.abstract,
+                                    byline = it.byline?.original,
+                                    mediaImageUrl = it.mediaImageUrl
+                                )
+                            })
                         }
                     }
                 } catch (e: JSONException) {

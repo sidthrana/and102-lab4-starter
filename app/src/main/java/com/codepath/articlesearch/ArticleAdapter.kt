@@ -1,7 +1,5 @@
 package com.codepath.articlesearch
 
-import ArticleEntity
-import DisplayArticle
 import android.content.Context
 import android.content.Intent
 import android.view.LayoutInflater
